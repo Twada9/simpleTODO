@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,6 +24,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import com.example.simpletodo.Database.TodoDatabase
 import com.example.simpletodo.Model.Todo
+import com.example.simpletodo.ViewModel.LatestTodoListUiState
 import com.example.simpletodo.ViewModel.MainViewModel
 import com.example.simpletodo.ui.theme.SimpleTODOTheme
 
@@ -55,17 +59,22 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TodoCard(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier) {
     Surface(onClick = {
-//        viewModel.add()
+        viewModel.delete(todo)
     }) {
         Card {
             Text(
-                "title",
+                todo.title,
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(8.dp)
-
+            )
+            Text(
+                todo.description,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             )
         }
     }
@@ -80,13 +89,23 @@ fun TodoCardPreview() {
 
 @Composable
 fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-        items(10) {
-            TodoCard(viewModel)
+    val uiState by viewModel.uiState.collectAsState()
+
+    when (uiState) {
+        is LatestTodoListUiState.Success -> {
+            val todoList = (uiState as LatestTodoListUiState.Success).todo
+            LazyColumn(
+                modifier
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(todoList) { todo ->
+                    TodoCard(viewModel, todo)
+                }
+            }
+        }
+        is LatestTodoListUiState.Error -> {
+
         }
     }
 }
