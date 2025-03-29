@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                     floatingActionButton = {
                         AddButton(viewModel)
                 }) { innerPadding ->
-                    TodoCardList(viewModel)
+                    TodoCardList(viewModel, Modifier.padding(innerPadding))
                 }
             }
         }
