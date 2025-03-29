@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,14 +20,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,9 +49,11 @@ import com.example.simpletodo.ui.theme.SimpleTODOTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.initDatabase(context = applicationContext)
+
         enableEdgeToEdge()
         setContent {
             SimpleTODOTheme {
@@ -52,6 +63,55 @@ class MainActivity : ComponentActivity() {
                         AddButton(viewModel)
                 }) { innerPadding ->
                     TodoCardList(viewModel, Modifier.padding(innerPadding))
+                    BottomSheet(viewModel)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheet(viewModel: MainViewModel) {
+    var title by remember { mutableStateOf("title") }
+    var description by remember { mutableStateOf("description") }
+    val isSheetOpen by viewModel.showModalView.collectAsState()
+
+    if (isSheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                viewModel.closeModalView()
+            }
+        ) {
+            Column {
+                TextField(
+                    title,
+                    onValueChange = { title = it },
+                    Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    label = { Text("title") },
+                    maxLines = 1,
+                )
+                TextField(
+                    description,
+                    onValueChange = { description = it },
+                    Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    label = { Text("description") },
+                    minLines = 5,
+                )
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        viewModel.add(title, description)
+                        viewModel.closeModalView()
+                    },
+                    Modifier
+                        .padding(40.dp)
+                        .fillMaxWidth(),
+                ) {
+                    Text("保存")
                 }
             }
         }
@@ -114,7 +174,7 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 fun AddButton(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     FloatingActionButton(
         onClick = {
-        viewModel.add()
+            viewModel.openModalView()
     },
         modifier
             .wrapContentSize(Alignment.BottomEnd)

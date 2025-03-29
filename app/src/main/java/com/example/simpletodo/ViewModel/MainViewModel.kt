@@ -1,7 +1,11 @@
 package com.example.simpletodo.ViewModel
 
+import android.content.ClipDescription
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
@@ -19,6 +23,8 @@ class MainViewModel: ViewModel() {
     private lateinit var db: TodoDatabase
     private val _uiState = MutableStateFlow<LatestTodoListUiState>(LatestTodoListUiState.Success(emptyList()))
     val uiState: StateFlow<LatestTodoListUiState> = _uiState
+    private val _showModalView = MutableStateFlow<Boolean>(false)
+    val showModalView: StateFlow<Boolean> = _showModalView
 
     private fun startObservingTodo() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -42,11 +48,11 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    fun add() {
+    fun add(title: String, description: String) {
         val id = UUID.randomUUID()
 
         viewModelScope.launch(Dispatchers.IO) {
-            db.todoDao().insert(Todo(id, "title", "description"))
+            db.todoDao().insert(Todo(id, title, description))
         }
     }
     fun get() {
@@ -66,6 +72,12 @@ class MainViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             db.todoDao().delete(todo)
         }
+    }
+    fun closeModalView() {
+        _showModalView.value = false
+    }
+    fun openModalView() {
+        _showModalView.value = true
     }
 }
 sealed class LatestTodoListUiState {
