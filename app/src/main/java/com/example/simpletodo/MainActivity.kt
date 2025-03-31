@@ -73,10 +73,11 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(viewModel: MainViewModel) {
-    var title by remember { mutableStateOf("title") }
-    var description by remember { mutableStateOf("description") }
     val isSheetOpen by viewModel.showModalView.collectAsState()
-
+    val selectedTodo by viewModel.selectedTodo.collectAsState()
+    val isNewTodo = selectedTodo.title.isEmpty() && selectedTodo.description.isEmpty()
+    var title by remember(selectedTodo) { mutableStateOf(selectedTodo.title) }
+    var description by remember(selectedTodo) { mutableStateOf(selectedTodo.description) }
     if (isSheetOpen) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -104,14 +105,19 @@ fun BottomSheet(viewModel: MainViewModel) {
                 )
                 ExtendedFloatingActionButton(
                     onClick = {
-                        viewModel.add(title, description)
+                        if (isNewTodo) {
+                            viewModel.add(title, description)
+                        } else {
+                            viewModel.update(selectedTodo, title, description)
+                            viewModel.resetTodo()
+                        }
                         viewModel.closeModalView()
                     },
                     Modifier
                         .padding(40.dp)
                         .fillMaxWidth(),
                 ) {
-                    Text("保存")
+                    Text(if (isNewTodo) "追加" else "更新")
                 }
             }
         }
@@ -121,7 +127,8 @@ fun BottomSheet(viewModel: MainViewModel) {
 @Composable
 fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier) {
     Surface(onClick = {
-        viewModel.delete(todo)
+        viewModel.selectTodo(todo)
+        viewModel.openModalView()
     }) {
         Card {
             Text(
@@ -174,6 +181,7 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 fun AddButton(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     FloatingActionButton(
         onClick = {
+            viewModel.resetTodo()
             viewModel.openModalView()
     },
         modifier

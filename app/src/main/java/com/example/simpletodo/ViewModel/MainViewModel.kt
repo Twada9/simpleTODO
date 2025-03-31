@@ -25,6 +25,12 @@ class MainViewModel: ViewModel() {
     val uiState: StateFlow<LatestTodoListUiState> = _uiState
     private val _showModalView = MutableStateFlow<Boolean>(false)
     val showModalView: StateFlow<Boolean> = _showModalView
+    private val _selectedTodo = MutableStateFlow<Todo>(Todo(
+        id = UUID.randomUUID(),
+        title = "",
+        description = ""
+    ))
+    val selectedTodo: StateFlow<Todo> = _selectedTodo
 
     private fun startObservingTodo() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -78,6 +84,23 @@ class MainViewModel: ViewModel() {
     }
     fun openModalView() {
         _showModalView.value = true
+    }
+    fun selectTodo(todo: Todo) {
+        _selectedTodo.value = todo
+    }
+    fun resetTodo() {
+        _selectedTodo.value = Todo(
+            UUID.randomUUID(),
+            "",
+            ""
+        )
+    }
+    fun update(todo: Todo, title: String, description: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // 新しいTodoオブジェクトを作成（IDは同じままで内容を更新）
+            val updatedTodo = todo.copy(title = title, description = description)
+            db.todoDao().update(updatedTodo)
+        }
     }
 }
 sealed class LatestTodoListUiState {
