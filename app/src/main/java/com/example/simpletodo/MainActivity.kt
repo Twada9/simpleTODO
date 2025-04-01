@@ -6,7 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,20 +22,29 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +52,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,6 +63,7 @@ import com.example.simpletodo.Model.Todo
 import com.example.simpletodo.ViewModel.LatestTodoListUiState
 import com.example.simpletodo.ViewModel.MainViewModel
 import com.example.simpletodo.ui.theme.SimpleTODOTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
@@ -108,7 +126,7 @@ fun BottomSheet(viewModel: MainViewModel) {
                         if (isNewTodo) {
                             viewModel.add(title, description)
                         } else {
-                            viewModel.update(selectedTodo, title, description)
+                            viewModel.update(selectedTodo, if (title == "") "title" else title , if (description == "") "description" else description)
                             viewModel.resetTodo()
                         }
                         viewModel.closeModalView()
@@ -124,26 +142,85 @@ fun BottomSheet(viewModel: MainViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier) {
-    Surface(onClick = {
-        viewModel.selectTodo(todo)
-        viewModel.openModalView()
-    }) {
-        Card {
-            Text(
-                todo.title,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
-            Text(
-                todo.description,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
+    var show by remember { mutableStateOf(true) }
+    val transition = updateTransition(
+        targetState = show,
+        label = "visibilityTransition"
+    )
+
+    LaunchedEffect(transition.currentState, transition.targetState) {
+        if (!transition.currentState && !transition.targetState) {
+            // アニメーション終了後に削除処理
+            delay(350)
+            viewModel.delete(todo)
         }
+    }
+
+    val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { fullWidth -> fullWidth * 0.25f },
+        confirmValueChange = { dismissValue ->
+            when (dismissValue) {
+                SwipeToDismissBoxValue.EndToStart -> {
+                    // 左スワイプ - 削除
+                    show = false
+                    true
+                }
+                else -> false
+            }
+        }
+    )
+    AnimatedVisibility(
+        visible = show,
+        ) {
+        SwipeToDismissBox(
+            dismissState,
+            backgroundContent = {
+                Box(
+                    Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .fillMaxSize()
+                        .background(color = Color.Red)
+                        .padding(8.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                }
+            },
+            modifier = Modifier,
+            enableDismissFromStartToEnd = false,
+            enableDismissFromEndToStart = true,
+            content = {
+                Surface(onClick = {
+                    viewModel.selectTodo(todo)
+                    viewModel.openModalView()
+                }) {
+                    Card {
+                        // 確認用
+//                        Text(
+//                            todo.id.toString(),
+//                            modifier
+//                                .fillMaxWidth()
+//                                .padding(8.dp)
+//                        )
+                        Text(
+                            todo.title,
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        )
+                        Text(
+                            todo.description,
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        )
+                    }
+                }
+            },
+        )
     }
 }
 
@@ -166,7 +243,10 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(todoList) { todo ->
+                items(
+                    todoList,
+                    key = { it.id },
+                ) { todo ->
                     TodoCard(viewModel, todo)
                 }
             }
