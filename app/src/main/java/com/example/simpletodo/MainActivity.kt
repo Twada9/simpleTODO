@@ -1,6 +1,5 @@
 package com.example.simpletodo
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,15 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.shrinkOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,25 +22,27 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,16 +53,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.room.Room
-import com.example.simpletodo.Database.TodoDatabase
 import com.example.simpletodo.Model.Todo
 import com.example.simpletodo.ViewModel.LatestTodoListUiState
 import com.example.simpletodo.ViewModel.MainViewModel
 import com.example.simpletodo.ui.theme.SimpleTODOTheme
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
@@ -96,6 +95,12 @@ fun BottomSheet(viewModel: MainViewModel) {
     val isNewTodo = selectedTodo.title.isEmpty() && selectedTodo.description.isEmpty()
     var title by remember(selectedTodo) { mutableStateOf(selectedTodo.title) }
     var description by remember(selectedTodo) { mutableStateOf(selectedTodo.description) }
+    var datePickerState by remember { mutableStateOf(DatePickerState(locale = Locale.JAPANESE)) }
+    var previousDateState by remember { mutableStateOf(0.toLong()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.JAPANESE)
+    val formattedDate = dateFormat.format(datePickerState.selectedDateMillis?.let { Date(it) } ?: Date())
+
     if (isSheetOpen) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -121,12 +126,75 @@ fun BottomSheet(viewModel: MainViewModel) {
                     label = { Text("description") },
                     minLines = 5,
                 )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    TextField(
+                        value = formattedDate.toString(),
+                        onValueChange = { },
+                        label = { Text("expiration") },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                showDatePicker = !showDatePicker
+                                previousDateState = datePickerState.selectedDateMillis ?: Date().time
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.DateRange,
+                                    contentDescription = "Select date"
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                    )
+
+                    if (showDatePicker) {
+                        DatePickerDialog(
+                            onDismissRequest = {
+                                showDatePicker = false
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        showDatePicker = false
+                                    },
+                                    enabled = true
+                                ) {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        showDatePicker = false
+                                        datePickerState.selectedDateMillis = previousDateState
+                                    },
+                                ) {
+                                    Text("キャンセル")
+                                }
+                            }
+                        ) {
+                            DatePicker(
+                                state = datePickerState,
+                                showModeToggle = showDatePicker
+                            )
+                        }
+                    }
+                }
                 ExtendedFloatingActionButton(
                     onClick = {
                         if (isNewTodo) {
-                            viewModel.add(title, description)
+                            viewModel.add(title, description, datePickerState.selectedDateMillis)
                         } else {
-                            viewModel.update(selectedTodo, if (title == "") "title" else title , if (description == "") "description" else description)
+                            viewModel.update(selectedTodo,
+                                if (title == "") "title" else title,
+                                if (description == "") "description" else description,
+                                datePickerState.selectedDateMillis
+                            )
                             viewModel.resetTodo()
                         }
                         viewModel.closeModalView()
@@ -150,6 +218,10 @@ fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier
         targetState = show,
         label = "visibilityTransition"
     )
+    val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.JAPANESE)
+    val formattedDate = todo.date?.let {
+        Date(it)
+    }?.let { dateFormat.format(it) } ?: ""
 
     LaunchedEffect(transition.currentState, transition.targetState) {
         if (!transition.currentState && !transition.targetState) {
@@ -194,17 +266,11 @@ fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier
             enableDismissFromEndToStart = true,
             content = {
                 Surface(onClick = {
+
                     viewModel.selectTodo(todo)
                     viewModel.openModalView()
                 }) {
                     Card {
-                        // 確認用
-//                        Text(
-//                            todo.id.toString(),
-//                            modifier
-//                                .fillMaxWidth()
-//                                .padding(8.dp)
-//                        )
                         Text(
                             todo.title,
                             modifier = modifier
@@ -214,6 +280,12 @@ fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier
                         Text(
                             todo.description,
                             modifier = modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        )
+                        Text(
+                            formattedDate,
+                            Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp)
                         )

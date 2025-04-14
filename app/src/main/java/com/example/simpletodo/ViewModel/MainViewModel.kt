@@ -1,21 +1,16 @@
 package com.example.simpletodo.ViewModel
 
-import android.content.ClipDescription
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.simpletodo.Database.TodoDatabase
 import com.example.simpletodo.Model.Todo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.UUID
 
 class MainViewModel: ViewModel() {
@@ -27,7 +22,8 @@ class MainViewModel: ViewModel() {
     private val _selectedTodo = MutableStateFlow<Todo>(Todo(
         id = UUID.randomUUID(),
         title = "",
-        description = ""
+        description = "",
+        date = Date().time
     ))
     val selectedTodo: StateFlow<Todo> = _selectedTodo
 
@@ -50,11 +46,11 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    fun add(title: String, description: String) {
+    fun add(title: String, description: String, date: Long?) {
         val id = UUID.randomUUID()
 
         viewModelScope.launch(Dispatchers.IO) {
-            db.todoDao().insert(Todo(id, title, description))
+            db.todoDao().insert(Todo(id, title, description, date ?: Date().time))
         }
     }
     fun get() {
@@ -88,13 +84,14 @@ class MainViewModel: ViewModel() {
         _selectedTodo.value = Todo(
             UUID.randomUUID(),
             "",
-            ""
+            "",
+            Date().time
         )
     }
-    fun update(todo: Todo, title: String, description: String) {
+    fun update(todo: Todo, title: String, description: String, date: Long?) {
         viewModelScope.launch(Dispatchers.IO) {
             // 新しいTodoオブジェクトを作成（IDは同じままで内容を更新）
-            val updatedTodo = todo.copy(title = title, description = description)
+            val updatedTodo = todo.copy(title = title, description = description, date = date ?: Date().time)
             db.todoDao().update(updatedTodo)
         }
     }

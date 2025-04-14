@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.simpletodo.DataAccess.TodoDao
 import com.example.simpletodo.Model.Todo
 
-@Database(entities = [Todo::class], version = 3)
+@Database(entities = [Todo::class], version = 2)
 abstract class TodoDatabase: RoomDatabase() {
     abstract fun todoDao(): TodoDao
     
