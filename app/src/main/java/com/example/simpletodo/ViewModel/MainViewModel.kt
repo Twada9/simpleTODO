@@ -8,7 +8,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.Room
 import com.example.simpletodo.Database.TodoDatabase
 import com.example.simpletodo.Model.Todo
 import kotlinx.coroutines.Dispatchers
@@ -45,11 +44,8 @@ class MainViewModel: ViewModel() {
         // contextが必要なためactivityから呼び出す必要があるが、onCreateだと何度も呼ばれてしまうので
         // 以下の分岐を設ける
         if (!::db.isInitialized) {
-            db = Room.databaseBuilder(
-                context.applicationContext,
-                TodoDatabase::class.java,
-                "todo_database"
-            ).build()
+            // TodoDatabaseクラスの初期化機能を使用
+            db = TodoDatabase.initializeDatabase(context)
             startObservingTodo()
         }
     }
