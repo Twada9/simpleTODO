@@ -12,4 +12,5 @@ data class Todo(
     @ColumnInfo val title: String,
     @ColumnInfo val description: String,
     @ColumnInfo val date: Long?,
+    @ColumnInfo val priority: Int,
 )
