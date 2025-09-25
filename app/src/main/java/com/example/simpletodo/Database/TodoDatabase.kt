@@ -33,7 +33,7 @@ abstract class TodoDatabase: RoomDatabase() {
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 Log.i(TAG, "マイグレーション実行: バージョン2→3")
-                database.execSQL("ALTER TABLE Todo ADD COLUMN priority INTEGER")
+                database.execSQL("ALTER TABLE Todo ADD COLUMN priority INTEGER DEFAULT 1")
                 Log.d(TAG, "マイグレーション2→3: 完了 (スキーマ変更なし、将来の拡張用)")
             }
         }
