@@ -87,7 +87,7 @@ class MainViewModel: ViewModel() {
             "",
             "",
             Date().time,
-            1
+            Priority.MIDDLE.value
         )
     }
     fun update(todo: Todo, title: String, description: String, date: Long?, priority: Int) {
