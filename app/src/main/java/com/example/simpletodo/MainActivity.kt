@@ -365,7 +365,7 @@ fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // ボーダーが表示するのに必要.fillMaxHeight()が0になるため
+                                // ボーダーを表示するのに必要。.fillMaxHeight()が0になるため
                                 .height(androidx.compose.foundation.layout.IntrinsicSize.Min)
                         ) {
                             Box(
