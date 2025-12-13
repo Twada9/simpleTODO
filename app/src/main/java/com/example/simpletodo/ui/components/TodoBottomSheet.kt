@@ -63,9 +63,9 @@ fun BottomSheet(viewModel: MainViewModel) {
     val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.JAPANESE)
     val formattedDate =
         dateFormat.format(datePickerState.selectedDateMillis?.let { Date(it) } ?: Date())
-
     if (isSheetOpen) {
         ModalBottomSheet(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             onDismissRequest = {
                 viewModel.closeModalView()
             }
