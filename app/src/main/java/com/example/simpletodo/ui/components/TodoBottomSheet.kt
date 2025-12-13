@@ -52,7 +52,12 @@ fun BottomSheet(viewModel: MainViewModel) {
     var description by remember(selectedTodo) { mutableStateOf(selectedTodo.description) }
     var selectedPriority by remember(selectedTodo) { mutableStateOf(Priority.fromInt(selectedTodo.priority)) }
     var priorityDropdownExpanded by remember { mutableStateOf(false) }
-    var datePickerState by remember { mutableStateOf(DatePickerState(locale = Locale.JAPANESE)) }
+    var datePickerState by remember {
+        mutableStateOf(DatePickerState(
+                locale = Locale.JAPANESE,
+            initialSelectedDateMillis = selectedTodo.date ?: Date().time
+        ))
+    }
     var previousDateState by remember { mutableStateOf(0.toLong()) }
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.JAPANESE)

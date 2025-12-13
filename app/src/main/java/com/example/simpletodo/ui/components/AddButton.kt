@@ -33,5 +33,3 @@ fun previewAddButton() {
     val viewModel = MainViewModel()
     AddButton(viewModel)
 }
-
-annotation class AddButton
