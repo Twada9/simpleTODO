@@ -222,7 +222,8 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         }
 
         is LatestTodoListUiState.Error -> {
-
+            val error = (uiState as LatestTodoListUiState.Error).exception
+            print(error)
         }
     }
 }

@@ -9,6 +9,7 @@ import com.example.simpletodo.Model.Todo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
@@ -31,6 +32,10 @@ class MainViewModel: ViewModel() {
     private fun startObservingTodo() {
         viewModelScope.launch(Dispatchers.IO) {
             db.todoDao().getAll()
+                .catch { exception ->
+                    _uiState.value = LatestTodoListUiState.Error(exception)
+                    print(exception)
+                }
                 .collect { todoList ->
                     _uiState.value = LatestTodoListUiState.Success(todoList)
                 }
