@@ -175,30 +175,30 @@ fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TodoCardPreview() {
-    // Create a sample Todo for the preview
-    val sampleTodo = Todo(
-        id = UUID.randomUUID(),
-        title = "Sample Task",
-        description = "This is a sample todo item for preview purposes. It shows how the card will look with some content.",
-        date = Date().time, // Current date
-        priority = 1 // Middle priority
-    )
-
-    // Create a mock viewModel (for preview purposes only)
-    val mockViewModel = MainViewModel()
-
-    SimpleTODOTheme {
-        Surface {
-            TodoCard(
-                viewModel = mockViewModel,
-                todo = sampleTodo
-            )
-        }
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun TodoCardPreview() {
+//    // Create a sample Todo for the preview
+//    val sampleTodo = Todo(
+//        id = UUID.randomUUID(),
+//        title = "Sample Task",
+//        description = "This is a sample todo item for preview purposes. It shows how the card will look with some content.",
+//        date = Date().time, // Current date
+//        priority = 1 // Middle priority
+//    )
+//
+//    // Create a mock viewModel (for preview purposes only)
+//    val mockViewModel = MainViewModel()
+//
+//    SimpleTODOTheme {
+//        Surface {
+//            TodoCard(
+//                viewModel = mockViewModel,
+//                todo = sampleTodo
+//            )
+//        }
+//    }
+//}
 
 @Composable
 fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
@@ -228,10 +228,10 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
-@Composable
-fun TodoCardListPreview() {
-    val viewModel = MainViewModel()
-    TodoCardList(viewModel)
-}
-
+//@Preview
+//@Composable
+//fun TodoCardListPreview() {
+//    val viewModel = MainViewModel()
+//    TodoCardList(viewModel)
+//}
+//
