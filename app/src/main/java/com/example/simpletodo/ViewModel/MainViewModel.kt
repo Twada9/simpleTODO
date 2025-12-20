@@ -33,6 +33,11 @@ class MainViewModel(
     )
     val selectedTodo: StateFlow<Todo> = _selectedTodo
 
+    init {
+        startObservingTodo()
+        print("yoba")
+    }
+
     private fun startObservingTodo() {
         viewModelScope.launch(Dispatchers.IO) {
             dao.getAll()
