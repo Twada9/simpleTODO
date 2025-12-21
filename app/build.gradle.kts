@@ -51,7 +51,7 @@ dependencies {
 
     implementation("io.insert-koin:koin-android:4.1.0")
     implementation("io.insert-koin:koin-androidx-compose:4.1.0")
-
+    implementation("io.mockk:mockk:1.14.7")
     // optional - Paging 3 Integration
     implementation("androidx.room:room-paging:$room_version")
     implementation(libs.androidx.core.ktx)

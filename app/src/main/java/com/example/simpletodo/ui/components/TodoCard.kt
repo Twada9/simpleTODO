@@ -45,13 +45,11 @@ import com.example.simpletodo.Model.Todo
 import com.example.simpletodo.ViewModel.LatestTodoListUiState
 import com.example.simpletodo.ViewModel.MainViewModel
 import com.example.simpletodo.ViewModel.Priority
-import com.example.simpletodo.mock.FakeTodoDao
 import com.example.simpletodo.ui.theme.SimpleTODOTheme
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.delay
-import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.KoinApplicationPreview
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -60,7 +58,7 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoCard(
-    viewModel: MainViewModel = koinViewModel(),
+    viewModel: MainViewModel,
     todo: Todo,
     modifier: Modifier = Modifier
 ) {
@@ -185,7 +183,7 @@ fun TodoCard(
 }
 
 @Composable
-fun TodoCardList(viewModel: MainViewModel = koinViewModel(), modifier: Modifier = Modifier) {
+fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsState()
 
     when (uiState) {
@@ -220,7 +218,6 @@ fun TodoCardList(viewModel: MainViewModel = koinViewModel(), modifier: Modifier 
 @Preview(showBackground = true)
 @Composable
 fun TodoCardPreview() {
-    // Create a sample Todo for the preview
     val sampleTodo = Todo(
         id = UUID.randomUUID(),
         title = "Sample Task",
@@ -229,13 +226,12 @@ fun TodoCardPreview() {
         priority = 1 // Middle priority
     )
 
-    KoinPreviewSetting {
-        SimpleTODOTheme {
-            Surface {
-                TodoCard(
-                    todo = sampleTodo
-                )
-            }
+    SimpleTODOTheme {
+        Surface {
+            TodoCard(
+                mockVM(),
+                sampleTodo
+            )
         }
     }
 }
@@ -243,22 +239,41 @@ fun TodoCardPreview() {
 @Preview(showBackground = true)
 @Composable
 fun TodoCardListPreview() {
-    KoinPreviewSetting {
-        SimpleTODOTheme {
-            TodoCardList()
-        }
+    SimpleTODOTheme {
+        TodoCardList(mockVM())
     }
 }
 
+@Preview
 @Composable
-fun KoinPreviewSetting(content: @Composable () -> Unit) {
-    val previewModule = remember {
-        module {
-            viewModel { MainViewModel(FakeTodoDao()) }
-        }
-    }
-    KoinApplicationPreview(
-        application = { modules(previewModule) },
-        content = content
+fun mockVM(): MainViewModel {
+    val vmMock = mockk<MainViewModel>()
+    every { vmMock.uiState } returns MutableStateFlow(
+        LatestTodoListUiState.Success(
+            listOf(
+                Todo(
+                    id = UUID.randomUUID(),
+                    title = "買い物",
+                    description = "牛乳とパンを買う",
+                    date = System.currentTimeMillis(),
+                    priority = 1
+                ),
+                Todo(
+                    id = UUID.randomUUID(),
+                    title = "勉強",
+                    description = "Kotlinの勉強をする",
+                    date = System.currentTimeMillis() + 86400000,
+                    priority = 2
+                ),
+                Todo(
+                    id = UUID.randomUUID(),
+                    title = "運動",
+                    description = "ジョギング30分",
+                    date = null,
+                    priority = 0
+                )
+            )
+        )
     )
+    return vmMock
 }
