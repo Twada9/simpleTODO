@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.simpletodo.DataAccess.TodoDao
 import com.example.simpletodo.Model.Todo
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,17 +34,11 @@ class MainViewModel(
     )
     val selectedTodo: StateFlow<Todo> = _selectedTodo
 
-    init {
-        startObservingTodo()
-        print("yoba")
-    }
-
-    private fun startObservingTodo() {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun startObservingTodo(dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        viewModelScope.launch(dispatcher) {
             dao.getAll()
-                .catch { exception ->
-                    _uiState.value = LatestTodoListUiState.Error(exception)
-                    print(exception)
+                .catch { e ->
+                    _uiState.value = LatestTodoListUiState.Error(e)
                 }
                 .collect { todoList ->
                     _uiState.value = LatestTodoListUiState.Success(todoList)
