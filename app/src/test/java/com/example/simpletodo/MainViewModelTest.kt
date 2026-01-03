@@ -82,7 +82,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun uiState_Error_WhenDaoLoading() = runTest {
+    fun uiState_Loading_WhenDaoEmitsNothing() = runTest {
         val testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         try {
