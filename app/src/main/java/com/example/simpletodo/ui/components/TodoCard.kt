@@ -244,8 +244,6 @@ fun TodoCardListPreview() {
     }
 }
 
-@Preview
-@Composable
 fun mockVM(): MainViewModel {
     val vmMock = mockk<MainViewModel>()
     every { vmMock.uiState } returns MutableStateFlow(

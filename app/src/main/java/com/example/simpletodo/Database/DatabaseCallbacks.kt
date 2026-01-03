@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseCallbacks {
-    val TAG = "TodoDatabase"
+    const val TAG = "TodoDatabase"
     val callback = object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)

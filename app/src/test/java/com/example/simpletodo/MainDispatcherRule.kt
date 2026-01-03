@@ -14,7 +14,7 @@ class MainDispatcherRule(
     private val dispatcher: TestDispatcher
 ): TestWatcher() {
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun starting(discription: Description?) {
+    override fun starting(description: Description?) {
         Dispatchers.setMain(dispatcher)
     }
 
