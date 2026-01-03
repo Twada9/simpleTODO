@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -46,7 +47,10 @@ import com.example.simpletodo.ViewModel.LatestTodoListUiState
 import com.example.simpletodo.ViewModel.MainViewModel
 import com.example.simpletodo.ViewModel.Priority
 import com.example.simpletodo.ui.theme.SimpleTODOTheme
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,7 +58,11 @@ import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier) {
+fun TodoCard(
+    viewModel: MainViewModel,
+    todo: Todo,
+    modifier: Modifier = Modifier
+) {
     var show by remember { mutableStateOf(true) }
     val transition = updateTransition(
         targetState = show,
@@ -175,31 +183,6 @@ fun TodoCard(viewModel: MainViewModel, todo: Todo, modifier: Modifier = Modifier
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TodoCardPreview() {
-    // Create a sample Todo for the preview
-    val sampleTodo = Todo(
-        id = UUID.randomUUID(),
-        title = "Sample Task",
-        description = "This is a sample todo item for preview purposes. It shows how the card will look with some content.",
-        date = Date().time, // Current date
-        priority = 1 // Middle priority
-    )
-
-    // Create a mock viewModel (for preview purposes only)
-    val mockViewModel = MainViewModel()
-
-    SimpleTODOTheme {
-        Surface {
-            TodoCard(
-                viewModel = mockViewModel,
-                todo = sampleTodo
-            )
-        }
-    }
-}
-
 @Composable
 fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsState()
@@ -222,15 +205,83 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         }
 
         is LatestTodoListUiState.Error -> {
+            val error = (uiState as LatestTodoListUiState.Error).exception
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("エラー: ${error.message}")
+            }
+        }
 
+        is LatestTodoListUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun TodoCardListPreview() {
-    val viewModel = MainViewModel()
-    TodoCardList(viewModel)
+fun TodoCardPreview() {
+    val sampleTodo = Todo(
+        id = UUID.randomUUID(),
+        title = "Sample Task",
+        description = "This is a sample todo item for preview purposes. It shows how the card will look with some content.",
+        date = Date().time, // Current date
+        priority = 1 // Middle priority
+    )
+
+    SimpleTODOTheme {
+        Surface {
+            TodoCard(
+                mockVM(),
+                sampleTodo
+            )
+        }
+    }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun TodoCardListPreview() {
+    SimpleTODOTheme {
+        TodoCardList(mockVM())
+    }
+}
+
+fun mockVM(): MainViewModel {
+    val vmMock = mockk<MainViewModel>()
+    every { vmMock.uiState } returns MutableStateFlow(
+        LatestTodoListUiState.Success(
+            listOf(
+                Todo(
+                    id = UUID.randomUUID(),
+                    title = "買い物",
+                    description = "牛乳とパンを買う",
+                    date = System.currentTimeMillis(),
+                    priority = 1
+                ),
+                Todo(
+                    id = UUID.randomUUID(),
+                    title = "勉強",
+                    description = "Kotlinの勉強をする",
+                    date = System.currentTimeMillis() + 86400000,
+                    priority = 2
+                ),
+                Todo(
+                    id = UUID.randomUUID(),
+                    title = "運動",
+                    description = "ジョギング30分",
+                    date = null,
+                    priority = 0
+                )
+            )
+        )
+    )
+    return vmMock
+}

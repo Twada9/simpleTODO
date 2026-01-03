@@ -11,6 +11,10 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+// Disable build scans
+gradle.startParameter.isBuildScan = false
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
