@@ -8,18 +8,31 @@ import com.example.simpletodo.Model.Todo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
 
 class MainViewModel(
-    private val dao: TodoDao
+    private val dao: TodoDao,
+    sharingStarted: SharingStarted = SharingStarted.WhileSubscribed(5000)
 ) : ViewModel() {
-    private val _uiState =
-        MutableStateFlow<LatestTodoListUiState>(LatestTodoListUiState.Success(emptyList()))
-    val uiState: StateFlow<LatestTodoListUiState> = _uiState
+    val uiState: StateFlow<LatestTodoListUiState> = dao.getAll()
+    .map<List<Todo>, LatestTodoListUiState> { todoList ->
+        LatestTodoListUiState.Success(todoList)
+    }
+    .catch { e ->
+        emit(LatestTodoListUiState.Error(e))
+    }
+    .stateIn(
+        viewModelScope,
+        sharingStarted,
+        LatestTodoListUiState.Loading()
+    )
     private val _showModalView = MutableStateFlow<Boolean>(false)
     val showModalView: StateFlow<Boolean> = _showModalView
     private val _selectedTodo = MutableStateFlow<Todo>(
@@ -33,37 +46,11 @@ class MainViewModel(
     )
     val selectedTodo: StateFlow<Todo> = _selectedTodo
 
-    fun startObservingTodo(dispatcher: CoroutineDispatcher = Dispatchers.IO) {
-        viewModelScope.launch(dispatcher) {
-            dao.getAll()
-                .catch { e ->
-                    _uiState.value = LatestTodoListUiState.Error(e)
-                }
-                .collect { todoList ->
-                    _uiState.value = LatestTodoListUiState.Success(todoList)
-                }
-        }
-    }
-
     fun add(title: String, description: String, date: Long, priority: Int) {
         val id = UUID.randomUUID()
 
         viewModelScope.launch(Dispatchers.IO) {
             dao.insert(Todo(id, title, description, date, priority))
-        }
-    }
-
-    fun get() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                dao.getAll()
-                    .collect { todoList ->
-                        Log.d(null, todoList.first().title)
-                        _uiState.value = LatestTodoListUiState.Success(todoList)
-                    }
-            } catch (e: Exception) {
-                _uiState.value = LatestTodoListUiState.Error(e)
-            }
         }
     }
 
@@ -112,6 +99,7 @@ class MainViewModel(
 sealed class LatestTodoListUiState {
     data class Success(val todo: List<Todo>) : LatestTodoListUiState()
     data class Error(val exception: Throwable) : LatestTodoListUiState()
+    class Loading : LatestTodoListUiState()
 }
 
 enum class Priority(

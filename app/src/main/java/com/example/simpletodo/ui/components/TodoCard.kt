@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -210,6 +211,15 @@ fun TodoCardList(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Text("エラー: ${error.message}")
+            }
+        }
+
+        is LatestTodoListUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
         }
     }
