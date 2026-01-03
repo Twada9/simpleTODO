@@ -9,7 +9,9 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -30,10 +32,11 @@ import java.util.UUID
 class MainViewModelTest {
 
     @Test
-    fun startObservingTodo_Success_Tests() {
+    fun uiState_Success_WhenDaoReturnsData() = runTest {
         val testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         try {
+
             val dao = mockk<TodoDao>()
             val list = listOf(
                 Todo(
@@ -45,10 +48,9 @@ class MainViewModelTest {
                 )
             )
             every { dao.getAll() } returns MutableStateFlow(list)
-            val vm = MainViewModel(dao)
-            vm.startObservingTodo(testDispatcher)
-            print(LatestTodoListUiState.Success(list))
-            print(LatestTodoListUiState.Success(listOf()))
+
+            val vm = MainViewModel(dao, SharingStarted.Eagerly)
+
             val resultTodo = (vm.uiState.value as LatestTodoListUiState.Success).todo
             assertTrue(vm.uiState.value == LatestTodoListUiState.Success(list))
             assertTrue(resultTodo == LatestTodoListUiState.Success(list).todo)
@@ -59,21 +61,41 @@ class MainViewModelTest {
     }
 
     @Test
-    fun startObservingTodo_Failure_Tests() = runTest {
-        val message = "Test Exception"
-        val dao = mockk<TodoDao>()
-        every { dao.getAll() } returns flow {
-            throw Exception(message)
+    fun uiState_Error_WhenDaoThrowsException() = runTest {
+        val testDispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(testDispatcher)
+        try {
+            val message = "Test Exception"
+            val dao = mockk<TodoDao>()
+            every { dao.getAll() } returns flow {
+                throw Exception(message)
+            }
+
+            val vm = MainViewModel(dao, SharingStarted.Eagerly)
+
+            assertTrue(vm.uiState.value is LatestTodoListUiState.Error)
+            val error = vm.uiState.value as LatestTodoListUiState.Error
+            assertEquals(message, error.exception.message)
+        } finally {
+            Dispatchers.resetMain()
         }
-        val vm = MainViewModel(dao)
+    }
 
-        vm.startObservingTodo(StandardTestDispatcher(testScheduler))
+    @Test
+    fun uiState_Error_WhenDaoLoading() = runTest {
+        val testDispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(testDispatcher)
+        try {
+            val message = "Test Exception"
+            val dao = mockk<TodoDao>()
+            every { dao.getAll() } returns flow {}
 
-        advanceUntilIdle()
+            val vm = MainViewModel(dao, SharingStarted.Eagerly)
 
-        assertTrue(vm.uiState.value is LatestTodoListUiState.Error)
-        val error = vm.uiState.value as LatestTodoListUiState.Error
-        assertEquals(message, error.exception.message)
+            assertTrue(vm.uiState.value is LatestTodoListUiState.Loading)
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 
     @Test
@@ -87,6 +109,7 @@ class MainViewModelTest {
         )
         // 値の変化
         val dao = mockk<TodoDao>()
+        every { dao.getAll() } returns MutableStateFlow(emptyList())
         val vm = MainViewModel(dao)
         vm.selectTodo(
             todo
@@ -105,6 +128,7 @@ class MainViewModelTest {
             priority = 1
         )
         val dao = mockk<TodoDao>()
+        every { dao.getAll() } returns MutableStateFlow(emptyList())
         val vm = MainViewModel(dao)
         vm.selectTodo(todo)
         assertTrue(vm.selectedTodo.value == todo)
@@ -117,6 +141,7 @@ class MainViewModelTest {
     fun closeModalView() {
         // 値の変化
         val dao = mockk<TodoDao>()
+        every { dao.getAll() } returns MutableStateFlow(emptyList())
         val vm = MainViewModel(dao)
         vm.closeModalView()
         assertFalse(vm.showModalView.value)
@@ -126,6 +151,7 @@ class MainViewModelTest {
     fun openModalView() {
         // 値の変化
         val dao = mockk<TodoDao>()
+        every { dao.getAll() } returns MutableStateFlow(emptyList())
         val vm = MainViewModel(dao)
         vm.openModalView()
         assertTrue(vm.showModalView.value)
