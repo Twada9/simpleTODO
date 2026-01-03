@@ -31,7 +31,7 @@ class MainViewModel(
     .stateIn(
         viewModelScope,
         sharingStarted,
-        LatestTodoListUiState.Loading()
+        LatestTodoListUiState.Loading
     )
     private val _showModalView = MutableStateFlow<Boolean>(false)
     val showModalView: StateFlow<Boolean> = _showModalView
@@ -99,7 +99,7 @@ class MainViewModel(
 sealed class LatestTodoListUiState {
     data class Success(val todo: List<Todo>) : LatestTodoListUiState()
     data class Error(val exception: Throwable) : LatestTodoListUiState()
-    class Loading : LatestTodoListUiState()
+    data object Loading : LatestTodoListUiState()
 }
 
 enum class Priority(
